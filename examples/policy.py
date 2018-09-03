@@ -66,12 +66,12 @@ if __name__ == '__main__':
     if camera_intr_filename is None:
         camera_intr_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                             '..',
-                                            'data/calib/primesense.intr')    
+                                            'data/calib/primesense.intr')
     if config_filename is None:
         config_filename = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                        '..',
                                        'cfg/examples/dex-net_2.0.yaml')
-    
+
     # read config
     config = YamlConfig(config_filename)
     inpaint_rescale_factor = config['inpaint_rescale_factor']
@@ -87,18 +87,18 @@ if __name__ == '__main__':
 
     # setup sensor
     camera_intr = CameraIntrinsics.load(camera_intr_filename)
-        
+
     # read images
     depth_im = DepthImage.open(depth_im_filename, frame=camera_intr.frame)
     depth_im = depth_im.inpaint(rescale_factor=inpaint_rescale_factor)
     color_im = ColorImage(np.zeros([depth_im.height, depth_im.width, 3]).astype(np.uint8),
                           frame=camera_intr.frame)
-    
+
     # optionally read a segmask
     segmask = None
     if segmask_filename is not None:
         segmask = BinaryImage.open(segmask_filename)
-    
+
     # create state
     rgbd_im = RgbdImage.from_color_and_depth(color_im, depth_im)
     state = RgbdImageState(rgbd_im, camera_intr, segmask=segmask)

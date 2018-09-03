@@ -38,7 +38,8 @@ from sklearn.mixture import GaussianMixture
 import autolab_core.utils as utils
 from autolab_core import Point
 from perception import BinaryImage, ColorImage, DepthImage, RgbdImage, SegmentationImage, CameraIntrinsics
-from visualization import Visualizer2D as vis
+# from visualization import Visualizer2D as vis
+from visualizer import Visualizer as vis
 
 from . import Grasp2D, SuctionPoint2D, ImageGraspSamplerFactory, GQCNN, GraspQualityFunctionFactory, GQCnnQualityFunction
 from .utils import GripperMode, NoValidGraspsException
@@ -675,11 +676,14 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                            vmin=self.config['vis']['vmin'],
                            vmax=self.config['vis']['vmax'])
                 for grasp, q in zip(grasps, norm_q_values):
-                    vis.grasp(grasp, scale=2.0,
+                    if grasp_type == 'parallel_jaw':
+                        vis.grasp(grasp, scale=2.0,
                               jaw_width=2.0,
                               show_center=False,
                               show_axis=True,
                               color=plt.cm.RdYlGn(q))
+                    else:
+                        vis.scatter(grasp.center.x, grasp.center.y, c=plt.cm.RdYlGn(q))
                 vis.title('Sampled grasps iter %d' %(j))
                 filename = None
                 if self._logging_dir is not None:
@@ -702,8 +706,14 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                            vmin=self.config['vis']['vmin'],
                            vmax=self.config['vis']['vmax'])
                 for grasp, q in zip(elite_grasps, norm_q_values):
-                    vis.grasp(grasp, scale=1.5, show_center=False, show_axis=True,
-                              color=plt.cm.RdYlGn(q))
+                    if grasp_type == 'parallel_jaw':
+                        vis.grasp(grasp, scale=2.0,
+                                  jaw_width=2.0,
+                                  show_center=False,
+                                  show_axis=True,
+                                  color=plt.cm.RdYlGn(q))
+                    else:
+                        vis.scatter(grasp.center.x, grasp.center.y, c=plt.cm.RdYlGn(q))
                 vis.title('Elite grasps iter %d' %(j))
                 filename = None
                 if self._logging_dir is not None:
@@ -806,11 +816,14 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                        vmin=self.config['vis']['vmin'],
                        vmax=self.config['vis']['vmax'])
             for grasp, q in zip(grasps, norm_q_values):
-                vis.grasp(grasp, scale=2.0,
-                          jaw_width=2.0,
-                          show_center=False,
-                          show_axis=True,
-                          color=plt.cm.RdYlGn(q))
+                if grasp_type == 'parallel_jaw':
+                    vis.grasp(grasp, scale=2.0,
+                              jaw_width=2.0,
+                              show_center=False,
+                              show_axis=True,
+                              color=plt.cm.RdYlGn(q))
+                else:
+                    vis.scatter(grasp.center.x, grasp.center.y, c=plt.cm.RdYlGn(q))
             vis.title('Final sampled grasps')
             filename = None
             if self._logging_dir is not None:

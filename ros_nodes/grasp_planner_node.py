@@ -1,29 +1,6 @@
-# -*- coding: utf-8 -*-
-"""
-Copyright ©2017. The Regents of the University of California (Regents). All Rights Reserved.
-Permission to use, copy, modify, and distribute this software and its documentation for educational,
-research, and not-for-profit purposes, without fee and without a signed licensing agreement, is
-hereby granted, provided that the above copyright notice, this paragraph and the following two
-paragraphs appear in all copies, modifications, and distributions. Contact The Office of Technology
-Licensing, UC Berkeley, 2150 Shattuck Avenue, Suite 510, Berkeley, CA 94720-1620, (510) 643-
-7201, otl@berkeley.edu, http://ipira.berkeley.edu/industry-info for commercial licensing opportunities.
-
-IN NO EVENT SHALL REGENTS BE LIABLE TO ANY PARTY FOR DIRECT, INDIRECT, SPECIAL,
-INCIDENTAL, OR CONSEQUENTIAL DAMAGES, INCLUDING LOST PROFITS, ARISING OUT OF
-THE USE OF THIS SOFTWARE AND ITS DOCUMENTATION, EVEN IF REGENTS HAS BEEN
-ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-REGENTS SPECIFICALLY DISCLAIMS ANY WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
-THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-PURPOSE. THE SOFTWARE AND ACCOMPANYING DOCUMENTATION, IF ANY, PROVIDED
-HEREUNDER IS PROVIDED "AS IS". REGENTS HAS NO OBLIGATION TO PROVIDE
-MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
-"""
 #!/usr/bin/env python
-""" 
-ROS Server for planning GQCNN grasps 
-Author: Vishal Satish
-"""
+# -*- coding: utf-8 -*-
+
 import rospy
 import time
 import perception
@@ -39,6 +16,8 @@ from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Header
 from gqcnn.srv import GQCNNGraspPlanner
 from gqcnn.msg import GQCNNGrasp
+
+import numpy as np
 
 class GraspPlanner(object):
     def __init__(self, cfg, cv_bridge, grasping_policy, grasp_pose_publisher):
@@ -60,23 +39,23 @@ class GraspPlanner(object):
         self.grasp_pose_publisher = grasp_pose_publisher
 
     def plan_grasp(self, req):
-        """ Grasp planner request handler 
-        
+        """ Grasp planner request handler
+
         Parameters
         ---------
         req: :obj:`ROS ServiceRequest`
             ROS ServiceRequest for grasp planner service
         """
         rospy.loginfo('Planning Grasp')
-        
+
         # get the raw depth and color images as ROS Image objects
         raw_color = req.color_image
         raw_depth = req.depth_image
 
         # get the raw camera info as ROS CameraInfo object
         raw_camera_info = req.camera_info
-        
-        # get the bounding box as a custom ROS BoundingBox msg 
+
+        # get the bounding box as a custom ROS BoundingBox msg
         bounding_box = req.bounding_box
 
         # wrap the camera info in a perception CameraIntrinsics object
@@ -98,55 +77,63 @@ class GraspPlanner(object):
             vis.show()
 
         # aggregate color and depth images into a single perception rgbdimage
+        depth_image = depth_image.inpaint(rescale_factor = self.cfg['inpaint_rescale_factor'])
         rgbd_image = perception.RgbdImage.from_color_and_depth(color_image, depth_image)
-        
-        # calc crop parameters
-        minX = bounding_box.minX
-        minY = bounding_box.minY
-        maxX = bounding_box.maxX
-        maxY = bounding_box.maxY
 
-        # contain box to image->don't let it exceed image height/width bounds
-        no_pad = False
-        if minX < 0:
-            minX = 0
-            no_pad = True
-        if minY < 0:
-            minY = 0
-            no_pad = True
-        if maxX > rgbd_image.width:
-            maxX = rgbd_image.width
-            no_pad = True
-        if maxY > rgbd_image.height:
-            maxY = rgbd_image.height
-            no_pad = True
+        # # calc crop parameters
+        # minX = bounding_box.minX
+        # minY = bounding_box.minY
+        # maxX = bounding_box.maxX
+        # maxY = bounding_box.maxY
+        #
+        # # contain box to image->don't let it exceed image height/width bounds
+        # no_pad = False
+        # if minX < 0:
+        #     minX = 0
+        #     no_pad = True
+        # if minY < 0:
+        #     minY = 0
+        #     no_pad = True
+        # if maxX > rgbd_image.width:
+        #     maxX = rgbd_image.width
+        #     no_pad = True
+        # if maxY > rgbd_image.height:
+        #     maxY = rgbd_image.height
+        #     no_pad = True
+        #
+        # centroidX = (maxX + minX) / 2
+        # centroidY = (maxY + minY) / 2
+        #
+        # # add some padding to bounding box to prevent empty pixel regions when the image is rotated during grasp planning
+        # if not no_pad:
+        #     width = (maxX - minX) + self.cfg['width_pad']
+        #     height = (maxY - minY) + self.cfg['height_pad']
+        # else:
+        #     width = (maxX - minX)
+        #     height = (maxY - minY)
+        #
+        # # crop camera intrinsics and rgbd image
+        # cropped_camera_intrinsics = camera_intrinsics.crop(height, width, centroidY, centroidX)
+        # cropped_rgbd_image = rgbd_image.crop(height, width, centroidY, centroidX)
+        #
+        # # visualize
+        # if self.cfg['vis']['vis_cropped_rgbd_image']:
+        #     vis.imshow(cropped_rgbd_image)
+        #     vis.show()
+        #
+        # # create an RGBDImageState with the cropped RGBDImage and CameraIntrinsics
+        # image_state = RgbdImageState(cropped_rgbd_image, cropped_camera_intrinsics)
+        print("Depth max",np.max(rgbd_image.depth.data))
+        print("Depth min",np.min(rgbd_image.depth.data))
+        mask = (depth_image.data < 0.7).astype(np.uint8)+1
+        segmask = perception.BinaryImage(mask, frame=camera_intrinsics.frame, threshold=1.5)
+        vis.imshow(segmask)
+        vis.show()
+        image_state = RgbdImageState(rgbd_image, camera_intrinsics, segmask=segmask)
 
-        centroidX = (maxX + minX) / 2
-        centroidY = (maxY + minY) / 2
-
-        # add some padding to bounding box to prevent empty pixel regions when the image is rotated during grasp planning
-        if not no_pad:
-            width = (maxX - minX) + self.cfg['width_pad']
-            height = (maxY - minY) + self.cfg['height_pad']
-        else:
-            width = (maxX - minX)
-            height = (maxY - minY)
-  
-        # crop camera intrinsics and rgbd image
-        cropped_camera_intrinsics = camera_intrinsics.crop(height, width, centroidY, centroidX)
-        cropped_rgbd_image = rgbd_image.crop(height, width, centroidY, centroidX)
-        
-        # visualize  
-        if self.cfg['vis']['vis_cropped_rgbd_image']:
-            vis.imshow(cropped_rgbd_image)
-            vis.show()
-
-        # create an RGBDImageState with the cropped RGBDImage and CameraIntrinsics
-        image_state = RgbdImageState(cropped_rgbd_image, cropped_camera_intrinsics)
-  
         # execute policy
         try:
-            return self.execute_policy(image_state, self.grasping_policy, self.grasp_pose_publisher, cropped_camera_intrinsics.frame)
+            return self.execute_policy(image_state, self.grasping_policy, self.grasp_pose_publisher, camera_intrinsics.frame)
         except NoValidGraspsException:
             rospy.logerr('While executing policy found no valid grasps from sampled antipodal point pairs. Aborting Policy!')
             raise rospy.ServiceException('While executing policy found no valid grasps from sampled antipodal point pairs. Aborting Policy!')
@@ -156,7 +143,7 @@ class GraspPlanner(object):
 
     def execute_policy(self, rgbd_image_state, grasping_policy, grasp_pose_publisher, pose_frame):
         """ Executes a grasping policy on an RgbdImageState
-        
+
         Parameters
         ----------
         rgbd_image_state: :obj:`RgbdImageState`
@@ -172,7 +159,7 @@ class GraspPlanner(object):
         rospy.loginfo('Planning Grasp')
         grasp_planning_start_time = time.time()
         grasp = grasping_policy(rgbd_image_state)
-  
+
         # create GQCNNGrasp return msg and populate it
         gqcnn_grasp = GQCNNGrasp()
         gqcnn_grasp.grasp_success_prob = grasp.q_value
@@ -193,7 +180,7 @@ class GraspPlanner(object):
         return gqcnn_grasp
 
 if __name__ == '__main__':
-    
+
     # initialize the ROS node
     rospy.init_node('Grasp_Sampler_Server')
 
@@ -207,14 +194,14 @@ if __name__ == '__main__':
     # create publisher to publish pose only of final grasp
     grasp_pose_publisher = rospy.Publisher('/gqcnn_grasp/pose', PoseStamped, queue_size=10)
 
-    # create a policy 
+    # create a policy
     rospy.loginfo('Creating Grasp Policy')
     grasping_policy = CrossEntropyRobustGraspingPolicy(policy_cfg)
 
     # create a grasp planner object
     grasp_planner = GraspPlanner(cfg, cv_bridge, grasping_policy, grasp_pose_publisher)
 
-    # initialize the service        
+    # initialize the service
     service = rospy.Service('plan_gqcnn_grasp', GQCNNGraspPlanner, grasp_planner.plan_grasp)
     rospy.loginfo('Grasp Sampler Server Initialized')
 

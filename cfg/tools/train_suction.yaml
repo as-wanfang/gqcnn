@@ -9,14 +9,14 @@ model_dir: /path/to/your/pretrained/gqcnn/model
 # general optimization parameters
 train_batch_size: 64
 val_batch_size: 16
-num_epochs: 25     # number of epochs to train for
+num_epochs: 2     # number of epochs to train for
 eval_frequency: 5000  # how often to get validation error 
 save_frequency: 5000  # how often to save output
 vis_frequency: 1000
 log_frequency: 1     # how often to log output
 show_filters: 0
 
-queue_capacity: 100  # capacity of prefetch queue
+queue_capacity: 1000  # capacity of prefetch queue
 queue_sleep: 0.01     # how long to sleep between prefetches
 
 data_split_mode: image_wise # how to split up the data into training vs validation: options are image_wise, stable_pose_wise, object_wise
@@ -49,10 +49,13 @@ preproc_mode: none
 input_data_mode: tf_image_suction
 num_tensor_channels: 1
 
-num_random_files: 100
-
+# label params
 target_metric_name: robust_suction_wrench_resistance
 metric_thresh: 0.4
+
+# preproc params
+num_random_files: 1000     # the number of random files to compute dataset statistics in preprocessing (lower speeds initialization)
+preproc_log_frequency: 100 # how often to log preprocessing (in steps)
 
 # denoising / synthetic data params
 multiplicative_denoising: 1
@@ -98,12 +101,16 @@ fc3_drop_rate: 0.5
 drop_fc4: 0
 fc4_drop_rate: 0.5
 
+# tensorboard
+tensorboard_port: 6006
+
 # debugging params
 debug: 1
 debug_num_files: 100000
+seed: 24098
 
 ### GQCNN CONFIG ###
-gqcnn_config:
+gqcnn:
   # basic data metrics
   im_height: 32
   im_width: 32

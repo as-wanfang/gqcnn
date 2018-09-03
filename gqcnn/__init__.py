@@ -30,12 +30,15 @@ from policy import Policy, GraspingPolicy, UniformRandomGraspingPolicy, RobustGr
 from optimizer import GQCNNOptimizer
 from analyzer import GQCNNAnalyzer
 
-from utils import NoValidGraspsException
+from utils import NoValidGraspsException, NoAntipodalPairsFoundException
 
-__all__ = ['GQCNN', 
+from visualizer import Visualizer
+
+__all__ = ['GQCNN',
            'GQCNNOptimizer',
            'GQCNNAnalyzer',
            'Grasp2D', 'SuctionPoint2D',
            'GraspAction', 'Policy', 'GraspingPolicy', 'UniformRandomGraspingPolicy', 'RobustGraspingPolicy', 'CrossEntropyRobustGraspingPolicy',
            'RgbdImageState',
-           'GraspQualityFunction', 'SuctionQualityFunction', 'BestFitPlanaritySuctionQualityFunction', 'ApproachPlanaritySuctionQualityFunction', 'GQCnnQualityFunction', 'GraspQualityFunctionFactory']
+           'GraspQualityFunction', 'SuctionQualityFunction', 'BestFitPlanaritySuctionQualityFunction', 'ApproachPlanaritySuctionQualityFunction', 'GQCnnQualityFunction', 'GraspQualityFunctionFactory',
+           'Visualizer']

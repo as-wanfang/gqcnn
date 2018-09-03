@@ -1,6 +1,6 @@
 # general optimization params
 train_batch_size: 64
-val_batch_size: 16
+val_batch_size: 128
 
 # logging params
 num_epochs: 50        # number of epochs to train for
@@ -9,7 +9,7 @@ save_frequency: 10    # how often to save output (in epochs)
 vis_frequency: 10000  # how often to visualize filters (in epochs)
 log_frequency: 1      # how often to log output (in steps)
 
-# train / val split params 
+# train / val split params
 train_pct: 0.8              # percentage of the data to use for training vs validation
 total_pct: 1.0              # percentage of all the files to use
 eval_total_train_error: 0   # whether or not to evaluate the total training error on each validataion
@@ -36,15 +36,15 @@ reinit_fc5: 0
 
 # input params
 training_mode: classification
-image_field_name: tf_depth_ims
-pose_field_name: grasps
+image_field_name: depth_ims_tf_table
+pose_field_name: hand_poses
 
 # label params
-target_metric_name: grasp_metrics  # name of the field to use for the labels
-metric_thresh: 0.75                 # threshold for positive examples (label = 1 if grasp_metric > metric_thresh)
+target_metric_name: robust_suction_wrench_resistance  # name of the field to use for the labels
+metric_thresh: 0.2                 # threshold for positive examples (label = 1 if grasp_metric > metric_thresh)
 
 # preproc params
-num_random_files: 1000     # the number of random files to compute dataset statistics in preprocessing (lower speeds initialization)
+num_random_files: 100     # the number of random files to compute dataset statistics in preprocessing (lower speeds initialization)
 preproc_log_frequency: 100 # how often to log preprocessing (in steps)
 
 # denoising / synthetic data params
@@ -74,37 +74,37 @@ seed: 24098
 ### GQCNN CONFIG ###
 gqcnn:
   # basic data metrics
-  im_height: 96
-  im_width: 96
+  im_height: 32
+  im_width: 32
   im_channels: 1
 
   # needs to match input data mode that was used for training, determines the pose dimensions for the network
-  gripper_mode: parallel_jaw
+  gripper_mode: suction
 
   # prediction batch size, in training this will be overriden by the val_batch_size in the SGDOptimizer's config file
-  batch_size: 16
+  batch_size: 64
 
   # architecture
   architecture:
     conv1_1:
-      filt_dim: 9
-      num_filt: 16
-      pool_size: 2
-      pool_stride: 2  
+      filt_dim: 7
+      num_filt: 64
+      pool_size: 1
+      pool_stride: 1
       padding: VALID
       norm: 0
       norm_type: local_response
     conv1_2:
-      filt_dim: 3
-      num_filt: 16
+      filt_dim: 5
+      num_filt: 64
       pool_size: 2
       pool_stride: 2
       padding: VALID
-      norm: 0
+      norm: 1
       norm_type: local_response
     conv2_1:
       filt_dim: 3
-      num_filt: 16
+      num_filt: 64
       pool_size: 1
       pool_stride: 1
       padding: VALID
@@ -112,20 +112,20 @@ gqcnn:
       norm_type: local_response
     conv2_2:
       filt_dim: 3
-      num_filt: 16
-      pool_size: 2
-      pool_stride: 2
+      num_filt: 64
+      pool_size: 1
+      pool_stride: 1
       padding: VALID
-      norm: 0
+      norm: 1
       norm_type: local_response
     pc1:
-      out_size: 4
+      out_size: 16
     pc2:
       out_size: 0
     fc3:
-      out_size: 64
+      out_size: 1024
     fc4:
-      out_size: 64
+      out_size: 1024
     fc5:
       out_size: 2
 

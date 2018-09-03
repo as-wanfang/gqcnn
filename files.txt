@@ -1,0 +1,10 @@
+/usr/local/lib/python2.7/dist-packages/gqcnn-0.0.2-py2.7.egg
+/usr/local/bin/skivi
+/usr/local/bin/ipython
+/usr/local/bin/iptest2
+/usr/local/bin/iptest
+/usr/local/bin/ipython2
+/usr/local/bin/pygmentize
+/usr/local/bin/easy_install
+/usr/local/bin/dill_unpickle.py
+/usr/local/bin/get_objgraph.py
