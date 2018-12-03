@@ -123,9 +123,10 @@ class GraspPlanner(object):
         #
         # # create an RGBDImageState with the cropped RGBDImage and CameraIntrinsics
         # image_state = RgbdImageState(cropped_rgbd_image, cropped_camera_intrinsics)
+        # create a mask by filter away the destop
         print("Depth max",np.max(rgbd_image.depth.data))
         print("Depth min",np.min(rgbd_image.depth.data))
-        mask = (depth_image.data < 0.7).astype(np.uint8)+1
+        mask = (depth_image.data < 0.79).astype(np.uint8)+1
         segmask = perception.BinaryImage(mask, frame=camera_intrinsics.frame, threshold=1.5)
         vis.imshow(segmask)
         vis.show()
