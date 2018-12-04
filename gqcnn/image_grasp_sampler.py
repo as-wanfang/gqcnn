@@ -51,10 +51,10 @@ from . import NoAntipodalPairsFoundException
 
 def force_closure(p1, p2, n1, n2, mu):
     """ Computes whether or not the point and normal pairs are in force closure. """
-    # line between the contacts 
+    # line between the contacts
     v = p2 - p1
     v = v / np.linalg.norm(v)
-    
+
     # compute cone membership
     alpha = np.arctan(mu)
     in_cone_1 = (np.arccos(n1.dot(-v)) < alpha)
@@ -83,7 +83,7 @@ class ImageGraspSampler(object):
                segmask=None, seed=None, visualize=False):
         """
         Samples a set of 2D grasps from a given RGB-D image.
-        
+
         Parameters
         ----------
         rgbd_im : :obj:`perception.RgbdImage`
@@ -138,14 +138,14 @@ class ImageGraspSampler(object):
             binary image segmenting out the object of interest
         visualize : bool
             whether or not to show intermediate samples (for debugging)
- 
+
         Returns
         -------
         :obj:`list` of :obj:`Grasp2D`
             list of 2D grasp candidates
         """
         pass
-        
+
 class AntipodalDepthImageGraspSampler(ImageGraspSampler):
     """ Grasp sampler for antipodal point pairs from depth image gradients.
 
@@ -242,7 +242,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
             binary image segmenting out the object of interest
         visualize : bool
             whether or not to show intermediate samples (for debugging)
- 
+
         Returns
         -------
         :obj:`list` of :obj:`Grasp2D`
@@ -272,7 +272,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
             binary image segmenting out the object of interest
         visualize : bool
             whether or not to show intermediate samples (for debugging)
- 
+
         Returns
         -------
         :obj:`list` of :obj:`Grasp2D`
@@ -290,7 +290,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
             edge_pixels = np.array([p for p in edge_pixels if np.any(segmask[p[0], p[1]] > 0)])
         num_pixels = edge_pixels.shape[0]
         logging.debug('Depth edge detection took %.3f sec' %(time() - edge_start))
-        logging.debug('Found %d edge pixels' %(num_pixels))
+        print('Found %d edge pixels' %(num_pixels))
 
         # exit if no edge pixels
         if num_pixels == 0:
@@ -307,7 +307,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
 
         if visualize:
             vis.figure()
-            vis.subplot(1,2,1)            
+            vis.subplot(1,2,1)
             vis.imshow(depth_im)
             if num_pixels > 0:
                 vis.scatter(edge_pixels[:,1], edge_pixels[:,0], s=10, c='b')
@@ -329,6 +329,10 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
         max_grasp_width_px = Grasp2D(Point(np.zeros(2)), 0.0, min_depth,
                                      width = self._gripper_width,
                                      camera_intr=camera_intr).width_px
+        print('max_grasp_width_px: %.3f' %max_grasp_width_px)
+        print('gripper_width: %.3f' %self._gripper_width)
+        print('camera_intr: %.3f,%.3f,%.3f,%.3f'%(camera_intr._fx,camera_intr._fy,camera_intr._cx,camera_intr._cy))
+        print('min_depth: %.3f'%min_depth)
         normal_ip = edge_normals.dot(edge_normals.T)
         dists = ssd.squareform(ssd.pdist(edge_pixels))
         valid_indices = np.where((normal_ip < -np.cos(np.arctan(self._friction_coef))) & (dists < max_grasp_width_px) & (dists > 0.0))
@@ -346,6 +350,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
         sample_size = min(self._max_rejection_samples, num_pairs)
         candidate_pair_indices = np.random.choice(num_pairs, size=sample_size,
                                                   replace=False)
+        print('sample_size: %s'%sample_size)
         while k < sample_size and len(grasps) < num_samples:
             # sample a random pair without replacement
             j = candidate_pair_indices[k]
@@ -366,7 +371,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
                 grasp_theta = 0
                 if grasp_axis[1] != 0:
                     grasp_theta = np.arctan(grasp_axis[0] / grasp_axis[1])
-                    
+
                 # compute distance from image center
                 dist_from_center = np.linalg.norm(grasp_center - depth_im.center)
                 dist_from_boundary = min(np.abs(depth_im.height - grasp_center[0]),
@@ -378,7 +383,7 @@ class AntipodalDepthImageGraspSampler(ImageGraspSampler):
                     # form grasp object
                     grasp_center_pt = Point(np.array([grasp_center[1], grasp_center[0]]))
                     grasp = Grasp2D(grasp_center_pt, grasp_theta, 0.0)
-                    
+
                     # check grasp dists
                     grasp_dists = [Grasp2D.image_dist(grasp, candidate, alpha=self._angle_dist_weight) for candidate in grasps]
                     if len(grasps) == 0 or np.min(grasp_dists) > self._min_grasp_dist:

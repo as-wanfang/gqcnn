@@ -75,7 +75,7 @@ class GQCNN(object):
 
     @staticmethod
     def load(model_dir):
-        """ Instantiates a GQCNN object using the model found in model_dir 
+        """ Instantiates a GQCNN object using the model found in model_dir
 
         Parameters
         ----------
@@ -89,7 +89,7 @@ class GQCNN(object):
         """
         # get config dict with architecture and other basic configurations for GQCNN from config.json in model directory
         config_file = os.path.join(model_dir, 'config.json')
-        with open(config_file) as data_file:    
+        with open(config_file) as data_file:
             train_config = json.load(data_file)
 
         gqcnn_config = train_config['gqcnn_config']
@@ -109,17 +109,17 @@ class GQCNN(object):
         return gqcnn
 
     def get_tf_graph(self):
-        """ Returns the graph for this tf session 
+        """ Returns the graph for this tf session
 
         Returns
         -------
         :obj:`tf Graph`
-            TensorFlow Graph 
+            TensorFlow Graph
         """
         return self._graph
 
     def get_weights(self):
-        """ Returns the weights for this network 
+        """ Returns the weights for this network
 
         Returns
         -------
@@ -129,7 +129,7 @@ class GQCNN(object):
         return self._weights
 
     def init_mean_and_std(self, model_dir):
-        """ Initializes the mean and std to use for data normalization during prediction 
+        """ Initializes the mean and std to use for data normalization during prediction
 
         Parameters
         ----------
@@ -163,7 +163,7 @@ class GQCNN(object):
             self._pose_std = self._pose_std[:6]
 
     def init_weights_file(self, model_filename):
-        """ Initialize network weights from the specified model 
+        """ Initialize network weights from the specified model
 
         Parameters
         ----------
@@ -215,7 +215,7 @@ class GQCNN(object):
             self._weights.fc5b = tf.Variable(reader.get_tensor("fc5b"))
 
     def reinitialize_layers(self, reinit_fc3, reinit_fc4, reinit_fc5, reinit_pc1=False):
-        """ Re-initializes final fully-connected layers for fine-tuning 
+        """ Re-initializes final fully-connected layers for fine-tuning
 
         Parameters
         ----------
@@ -239,7 +239,7 @@ class GQCNN(object):
             if reinit_fc3:
                 fc3_std = np.sqrt(2.0 / (self.fc3_in_size))
                 self._weights.fc3W = tf.Variable(tf.truncated_normal([self.fc3_in_size, self.fc3_out_size], stddev=fc3_std))
-                self._weights.fc3b = tf.Variable(tf.truncated_normal([self.fc3_out_size], stddev=fc3_std))  
+                self._weights.fc3b = tf.Variable(tf.truncated_normal([self.fc3_out_size], stddev=fc3_std))
             if reinit_fc4:
                 fc4_std = np.sqrt(2.0 / (self.fc4_in_size))
                 self._weights.fc4W_im = tf.Variable(tf.truncated_normal([self.fc4_in_size, self.fc4_out_size], stddev=fc4_std))
@@ -249,7 +249,7 @@ class GQCNN(object):
                 fc5_std = np.sqrt(2.0 / (self.fc5_in_size))
                 self._weights.fc5W = tf.Variable(tf.truncated_normal([self.fc5_in_size, self.fc5_out_size], stddev=fc5_std))
                 self._weights.fc5b = tf.Variable(tf.constant(0.0, shape=[self.fc5_out_size]))
-    
+
     def init_weights_gaussian(self):
         """ Initializes weights for network from scratch using Gaussian Distribution """
 
@@ -329,12 +329,12 @@ class GQCNN(object):
             conv3_1_num_filt = cfg['conv3_1']['num_filt']
             conv3_1_size = layer_height * layer_width * conv3_1_num_filt
             conv3_1_shape = [conv3_1_filt_dim, conv3_1_filt_dim, layer_channels, conv3_1_num_filt]
-            
+
             conv3_1_num_inputs = conv3_1_filt_dim**2 * layer_channels
             conv3_1_std = np.sqrt(2.0 / (conv3_1_num_inputs))
             conv3_1W = tf.Variable(tf.truncated_normal(conv3_1_shape, stddev=conv3_1_std), name='conv3_1W')
             conv3_1b = tf.Variable(tf.truncated_normal([conv3_1_num_filt], stddev=conv3_1_std), name='conv3_1b')
-            
+
             layer_height = layer_height / cfg['conv3_1']['pool_stride']
             layer_width = layer_width / cfg['conv3_1']['pool_stride']
             layer_channels = conv3_1_num_filt
@@ -344,12 +344,12 @@ class GQCNN(object):
             conv3_2_num_filt = cfg['conv3_2']['num_filt']
             conv3_2_size = layer_height * layer_width * conv3_2_num_filt
             conv3_2_shape = [conv3_2_filt_dim, conv3_2_filt_dim, layer_channels, conv3_2_num_filt]
-            
+
             conv3_2_num_inputs = conv3_2_filt_dim**2 * layer_channels
             conv3_2_std = np.sqrt(2.0 / (conv3_2_num_inputs))
             conv3_2W = tf.Variable(tf.truncated_normal(conv3_2_shape, stddev=conv3_2_std), name='conv3_2W')
             conv3_2b = tf.Variable(tf.truncated_normal([conv3_2_num_filt], stddev=conv3_2_std), name='conv3_2b')
-            
+
             layer_height = layer_height / cfg['conv3_2']['pool_stride']
             layer_width = layer_width / cfg['conv3_2']['pool_stride']
             layer_channels = conv3_2_num_filt
@@ -414,7 +414,7 @@ class GQCNN(object):
         self._weights.conv2_1b = conv2_1b
         self._weights.conv2_2W = conv2_2W
         self._weights.conv2_2b = conv2_2b
-        
+
         if use_conv3:
             self._weights.conv3_1W = conv3_1W
             self._weights.conv3_1b = conv3_1b
@@ -436,13 +436,13 @@ class GQCNN(object):
             self._weights.pc2b = pc2b
 
     def _parse_config(self, config):
-        """ Parses configuration file for this GQCNN 
+        """ Parses configuration file for this GQCNN
 
         Parameters
         ----------
         config : dict
             python dictionary of configuration parameters such as architecure and basic data params such as batch_size for prediction,
-            im_height, im_width, ... 
+            im_height, im_width, ...
         """
 
         # load tensor params
@@ -452,10 +452,13 @@ class GQCNN(object):
         self._num_channels = config['im_channels']
         self._input_data_mode = config['input_data_mode']
 
-        # setup correct pose dimensions 
+        # setup correct pose dimensions
         if self._input_data_mode == InputDataMode.TF_IMAGE:
             # depth
             self._pose_dim = 1
+        if self._input_data_mode == InputDataMode.TF_IMAGE_SUCTION:
+            # depth
+            self._pose_dim = 2
         elif self._input_data_mode == InputDataMode.TF_IMAGE_PERSPECTIVE:
             # depth, cx, cy
             self._pose_dim = 3
@@ -482,7 +485,7 @@ class GQCNN(object):
         self.fc3_in_size = self._architecture['pc2']['out_size']
         self.fc3_out_size = self._architecture['fc3']['out_size']
         self.fc4_in_size = self._architecture['fc3']['out_size']
-        self.fc4_out_size = self._architecture['fc4']['out_size'] 
+        self.fc4_out_size = self._architecture['fc4']['out_size']
         self.fc5_in_size = self._architecture['fc4']['out_size']
         self.fc5_out_size = self._architecture['fc5']['out_size']
 
@@ -533,7 +536,7 @@ class GQCNN(object):
         """ Open tensorflow session """
         with self._graph.as_default():
             init = tf.global_variables_initializer()
-            # create custom config that tells tensorflow to allocate GPU memory 
+            # create custom config that tells tensorflow to allocate GPU memory
             # as needed so it is possible to run multiple tf sessions on the same GPU
             self.tf_config = tf.ConfigProto()
             self.tf_config.gpu_options.allow_growth = True
@@ -608,15 +611,15 @@ class GQCNN(object):
         return self._graph
 
     def update_im_mean(self, im_mean):
-        """ Updates image mean to be used for normalization when predicting 
-        
+        """ Updates image mean to be used for normalization when predicting
+
         Parameters
         ----------
         im_mean : float
             image mean to be used
         """
         self._im_mean = im_mean
-    
+
     def get_im_mean(self):
         """ Get the current image mean to be used for normalization when predicting
 
@@ -628,8 +631,8 @@ class GQCNN(object):
         return self.im_mean
 
     def update_im_std(self, im_std):
-        """ Updates image standard deviation to be used for normalization when predicting 
-        
+        """ Updates image standard deviation to be used for normalization when predicting
+
         Parameters
         ----------
         im_std : float
@@ -648,8 +651,8 @@ class GQCNN(object):
         return self.im_std
 
     def update_pose_mean(self, pose_mean):
-        """ Updates pose mean to be used for normalization when predicting 
-        
+        """ Updates pose mean to be used for normalization when predicting
+
         Parameters
         ----------
         pose_mean :obj:`tensorflow Tensor`
@@ -668,8 +671,8 @@ class GQCNN(object):
         return self._pose_mean
 
     def update_pose_std(self, pose_std):
-        """ Updates pose standard deviation to be used for normalization when predicting 
-        
+        """ Updates pose standard deviation to be used for normalization when predicting
+
         Parameters
         ----------
         pose_std :obj:`tensorflow Tensor`
@@ -686,13 +689,13 @@ class GQCNN(object):
             pose standard deviation
         """
         return self._pose_std
-        
+
     def add_softmax_to_predict(self):
         """ Adds softmax to output tensor of prediction network """
         self._output_tensor = tf.nn.softmax(self._output_tensor)
 
     def update_batch_size(self, batch_size):
-        """ Updates the prediction batch size 
+        """ Updates the prediction batch size
 
         Parameters
         ----------
@@ -702,7 +705,7 @@ class GQCNN(object):
         self._batch_size = batch_size
 
     def predict(self, image_arr, pose_arr):
-        """ Predict a set of images in batches 
+        """ Predict a set of images in batches
 
         Parameters
         ----------
@@ -745,10 +748,10 @@ class GQCNN(object):
             if close_sess:
                 self.close_session()
         return output_arr
-		
+
     @property
     def filters(self):
-        """ Returns the set of conv1_1 filters 
+        """ Returns the set of conv1_1 filters
 
         Returns
         -------
@@ -768,7 +771,7 @@ class GQCNN(object):
         return filters
 
     def _build_network(self, input_im_node, input_pose_node,  drop_fc3=False, drop_fc4=False, fc3_drop_rate=0, fc4_drop_rate=0):
-        """ Builds neural network 
+        """ Builds neural network
 
         Parameters
         ----------

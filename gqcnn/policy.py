@@ -99,14 +99,14 @@ class RgbdImageState(object):
         segmask = None
         if os.path.exists(segmask_filename):
             segmask = BinaryImage.open(segmask_filename)
-        fully_observed = None    
+        fully_observed = None
         if os.path.exists(state_filename):
             fully_observed = pkl.load(open(state_filename, 'rb'))
         return RgbdImageState(RgbdImage.from_color_and_depth(color, depth),
                               camera_intr,
                               segmask=segmask,
                               fully_observed=fully_observed)
-            
+
 class ParallelJawGrasp(object):
     """ Action to encapsulate parallel jaw grasps.
     """
@@ -136,7 +136,7 @@ class ParallelJawGrasp(object):
         q_value = pkl.load(open(q_value_filename, 'rb'))
         image = DepthImage.open(image_filename)
         return ParallelJawGrasp(grasp, q_value, image)
-        
+
 class Policy(object):
     """ Abstract policy class. """
     __metaclass__ = ABCMeta
@@ -184,12 +184,12 @@ class GraspingPolicy(Policy):
             if not os.path.exists(self._logging_dir):
                 os.mkdir(self._logging_dir)
         sampler_type = self._sampling_config['type']
-        
+
         # init grasp sampler
         self._grasp_sampler = ImageGraspSamplerFactory.sampler(sampler_type,
                                                                self._sampling_config,
                                                                self._gripper_width)
-        
+
         # init GQ-CNN
         self._gqcnn = GQCNN.load(self._gqcnn_model_dir)
 
@@ -241,13 +241,13 @@ class GraspingPolicy(Policy):
             action_dir = os.path.join(self._policy_dir, 'action')
             action.save(action_dir)
         return action
-        
+
     @abstractmethod
     def _action(self, state):
         """ Returns an action for a given state.
         """
         pass
-    
+
     def show(self, filename=None, dpi=100):
         """ Show a figure. """
         if self._logging_dir is None:
@@ -294,7 +294,7 @@ class GraspingPolicy(Policy):
             im_tf = depth_im_scaled.transform(translation, grasp.angle)
             im_tf = im_tf.crop(gqcnn_im_height, gqcnn_im_width)
             image_tensor[i,...] = im_tf.raw_data
-            
+
             if input_data_mode == InputDataMode.TF_IMAGE:
                 pose_tensor[i] = grasp.depth
             elif input_data_mode == InputDataMode.TF_IMAGE_PERSPECTIVE:
@@ -333,7 +333,7 @@ class AntipodalGraspingPolicy(GraspingPolicy):
         self._gripper_width = np.inf
         if 'gripper_width' in self.config.keys():
             self._gripper_width = self.config['gripper_width']
-            
+
     def select(self, grasps, q_value):
         """ Selects the grasp with the highest probability of success.
         Can override for alternate policies (e.g. epsilon greedy).
@@ -461,7 +461,7 @@ class AntipodalGraspingPolicy(GraspingPolicy):
         return ParallelJawGrasp(grasp, q_value, image)
 
 class CrossEntropyAntipodalGraspingPolicy(GraspingPolicy):
-    """ Optimizes a set of antipodal grasp candidates in image space using the 
+    """ Optimizes a set of antipodal grasp candidates in image space using the
     cross entropy method:
     (1) sample an initial set of candidates
     (2) sort the candidates
@@ -561,7 +561,7 @@ class CrossEntropyAntipodalGraspingPolicy(GraspingPolicy):
                                             seed=self._seed)
         num_grasps = len(grasps)
         if num_grasps == 0:
-            logging.warning('No valid grasps could be found')
+            print('No valid grasps could be found')
             raise NoValidGraspsException()
 
         logging.debug('Computing the seed set took %.3f sec' %(time() - seed_set_start))
@@ -718,7 +718,7 @@ class CrossEntropyAntipodalGraspingPolicy(GraspingPolicy):
                     vis.imshow(DepthImage(image_tf))
                     vis.title('Image %d: d=%.3f' %(i, depth))
                 self.show('tf_images_iter_%d.png' %(j))
-          
+
         # predict final set of grasps
         predict_start = time()
         output_arr = self.gqcnn.predict(image_tensor, pose_tensor)
@@ -756,9 +756,9 @@ class CrossEntropyAntipodalGraspingPolicy(GraspingPolicy):
 
         # return action
         return ParallelJawGrasp(grasp, q_value, image)
-        
+
 class QFunctionAntipodalGraspingPolicy(CrossEntropyAntipodalGraspingPolicy):
-    """ Optimizes a set of antipodal grasp candidates in image space using the 
+    """ Optimizes a set of antipodal grasp candidates in image space using the
     cross entropy method with a GQ-CNN that estimates the Q-function
     for use in Q-learning.
 
@@ -825,9 +825,9 @@ class QFunctionAntipodalGraspingPolicy(CrossEntropyAntipodalGraspingPolicy):
                                        self._reinit_fc4,
                                        self._reinit_fc5)
         self.gqcnn.initialize_network(add_softmax=False)
-        
+
 class EpsilonGreedyQFunctionAntipodalGraspingPolicy(QFunctionAntipodalGraspingPolicy):
-    """ Optimizes a set of antipodal grasp candidates in image space 
+    """ Optimizes a set of antipodal grasp candidates in image space
     using the cross entropy method with a GQ-CNN that estimates the
     Q-function for use in Q-learning, and chooses a random antipodal
     grasp with probability epsilon.
@@ -871,7 +871,7 @@ class EpsilonGreedyQFunctionAntipodalGraspingPolicy(QFunctionAntipodalGraspingPo
             grasp to execute
         """
         return CrossEntropyAntipodalGraspingPolicy.action(self, state)
-    
+
     def _action(self, state):
         """ Plans the grasp with the highest probability of success on
         the given RGB-D image.
@@ -909,10 +909,10 @@ class EpsilonGreedyQFunctionAntipodalGraspingPolicy(QFunctionAntipodalGraspingPo
                                             segmask=segmask,
                                             visualize=self.config['vis']['grasp_sampling'],
                                             seed=self._seed)
-        
+
         num_grasps = len(grasps)
         if num_grasps == 0:
-            logging.warning('No valid grasps could be found')
+            logging.warning('No valid grasps could be found when sampling')
             raise NoValidGraspsException()
 
         # choose a grasp uniformly at random
@@ -927,7 +927,7 @@ class EpsilonGreedyQFunctionAntipodalGraspingPolicy(QFunctionAntipodalGraspingPo
         # predict prob success
         output_arr = self.gqcnn.predict(image_tensor, pose_tensor)
         q_value = output_arr[0,-1]
-        
+
         # visualize planned grasp
         if self.config['vis']['grasp_plan']:
             scale_factor = float(self.gqcnn.im_width) / float(self._crop_width)
@@ -943,4 +943,3 @@ class EpsilonGreedyQFunctionAntipodalGraspingPolicy(QFunctionAntipodalGraspingPo
 
         # return action
         return ParallelJawGrasp(grasp, q_value, image)
-

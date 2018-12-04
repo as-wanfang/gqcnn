@@ -1,0 +1,1 @@
+{"_cy": 377.0, "_cx": 520.54, "_fy": 280.7, "_height": 772, "_fx": 280.9, "_width": 1032, "_skew": 0.0, "_K": 0, "_frame": "primesense_overhead"}
