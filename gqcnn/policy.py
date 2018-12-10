@@ -111,7 +111,7 @@ class RgbdImageState(object):
         obj_segmask = None
         if os.path.exists(obj_segmask_filename):
             obj_segmask = SegmentationImage.open(obj_segmask_filename, frame=camera_intr.frame)
-        fully_observed = None    
+        fully_observed = None
         if os.path.exists(state_filename):
             fully_observed = pkl.load(open(state_filename, 'rb'))
         return RgbdImageState(RgbdImage.from_color_and_depth(color, depth),
@@ -119,7 +119,7 @@ class RgbdImageState(object):
                               segmask=segmask,
                               obj_segmask=obj_segmask,
                               fully_observed=fully_observed)
-            
+
 class ParallelJawGrasp(object):
     """ Action to encapsulate parallel jaw grasps.
     """
@@ -149,7 +149,7 @@ class ParallelJawGrasp(object):
         q_value = pkl.load(open(q_value_filename, 'rb'))
         image = DepthImage.open(image_filename)
         return ParallelJawGrasp(grasp, q_value, image)
-        
+
 class GraspAction(object):
     """ Action to encapsulate parallel jaw grasps.
     """
@@ -167,7 +167,7 @@ class GraspAction(object):
         pkl.dump(self.grasp, open(grasp_filename, 'wb'))
         pkl.dump(self.q_value, open(q_value_filename, 'wb'))
         self.image.save(image_filename)
-        
+
 class Policy(object):
     """ Abstract policy class. """
     __metaclass__ = ABCMeta
@@ -210,7 +210,7 @@ class GraspingPolicy(Policy):
         self._logging_dir = None
         if 'logging_dir' in self.config.keys():
             self._logging_dir = self.config['logging_dir']
-            
+
         # init grasp sampler
         self._sampling_config = config['sampling']
         self._sampling_config['gripper_width'] = self._gripper_width
@@ -267,13 +267,13 @@ class GraspingPolicy(Policy):
             action_dir = os.path.join(self._policy_dir, 'action')
             action.save(action_dir)
         return action
-        
+
     @abstractmethod
     def _action(self, state):
         """ Returns an action for a given state.
         """
         pass
-    
+
     def show(self, filename=None, dpi=100):
         """ Show a figure. """
         if self._logging_dir is None:
@@ -373,7 +373,7 @@ class RobustGraspingPolicy(GraspingPolicy):
         # return top grasps
         if self._filters is None:
             return grasps_and_predictions[0][0]
-        
+
         # filter grasps
         logging.info('Filtering grasps')
         i = 0
@@ -382,7 +382,7 @@ class RobustGraspingPolicy(GraspingPolicy):
             grasp = grasps[index]
             valid = True
             for filter_name, is_valid in self._filters.iteritems():
-                valid = is_valid(grasp) 
+                valid = is_valid(grasp)
                 logging.debug('Grasp {} filter {} valid: {}'.format(i, filter_name, valid))
                 if not valid:
                     valid = False
@@ -425,7 +425,7 @@ class RobustGraspingPolicy(GraspingPolicy):
         if num_grasps == 0:
             logging.warning('No valid grasps could be found')
             raise NoValidGraspsException()
-        
+
         # save if specified
         if self._logging_dir is not None:
             if not os.path.exists(self._logging_dir):
@@ -439,7 +439,7 @@ class RobustGraspingPolicy(GraspingPolicy):
             while os.path.exists(test_case_dir):
                 test_case_id = utils.gen_experiment_id()
                 test_case_dir = os.path.join(self._logging_dir, 'test_case_%s' %(test_case_id))
-                
+
             # create the directory and save
             os.mkdir(test_case_dir)
             candidate_actions_filename = os.path.join(test_case_dir, 'actions.pkl')
@@ -451,7 +451,7 @@ class RobustGraspingPolicy(GraspingPolicy):
         compute_start = time()
         q_values = self._grasp_quality_fn(state, grasps, params=self._config)
         logging.debug('Grasp evaluation took %.3f sec' %(time()-compute_start))
-        
+
         if self.config['vis']['grasp_candidates']:
             # display each grasp on the original image, colored by predicted success
             norm_q_values = (q_values - np.min(q_values)) / (np.max(q_values) - np.min(q_values))
@@ -486,7 +486,7 @@ class RobustGraspingPolicy(GraspingPolicy):
         return GraspAction(grasp, q_value, state.rgbd_im.depth)
 
 class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
-    """ Optimizes a set of grasp candidates in image space using the 
+    """ Optimizes a set of grasp candidates in image space using the
     cross entropy method:
     (1) sample an initial set of candidates
     (2) sort the candidates
@@ -527,7 +527,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
         GraspingPolicy.__init__(self, config)
         self._parse_config()
         self._filters = filters
-        
+
     def _parse_config(self):
         """ Parses the parameters of the policy. """
         # cross entropy method parameters
@@ -549,7 +549,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
         self._max_approach_angle = np.inf
         if 'max_approach_angle' in self.config.keys():
             self._max_approach_angle = np.deg2rad(self.config['max_approach_angle'])
-            
+
         # gripper parameters
         self._seed = None
         if self.config['deterministic']:
@@ -564,11 +564,11 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
             self._logging_dir = self.config['logging_dir']
             if not os.path.exists(self._logging_dir):
                 os.mkdir(self._logging_dir)
-            
+
     def select(self, grasps, q_values):
         """ Selects the grasp with the highest probability of success.
         Can override for alternate policies (e.g. epsilon greedy).
-        """ 
+        """
         # sort
         logging.info('Sorting grasps')
         num_grasps = len(grasps)
@@ -580,7 +580,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
         # return top grasps
         if self._filters is None:
             return grasps_and_predictions[0][0]
-        
+
         # filter grasps
         logging.info('Filtering grasps')
         i = 0
@@ -589,7 +589,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
             grasp = grasps[index]
             valid = True
             for filter_name, is_valid in self._filters.iteritems():
-                valid = is_valid(grasp) 
+                valid = is_valid(grasp)
                 logging.debug('Grasp {} filter {} valid: {}'.format(i, filter_name, valid))
                 if not valid:
                     valid = False
@@ -626,7 +626,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
             os.mkdir(policy_dir)
             state_dir = os.path.join(policy_dir, 'state')
             state.save(state_dir)
-        
+
         # parse state
         seed_set_start = time()
         rgbd_im = state.rgbd_im
@@ -635,7 +635,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
         segmask = state.segmask
         point_cloud_im = camera_intr.deproject_to_image(depth_im)
         normal_cloud_im = point_cloud_im.normal_cloud_im()
-        
+
         # sample grasps
         grasps = self._grasp_sampler.sample(rgbd_im, camera_intr,
                                             self._num_seed_samples,
@@ -689,7 +689,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                 if self._logging_dir is not None:
                     filename = os.path.join(self._logging_dir, 'cem_iter_%d.png' %(j))
                 vis.show(filename)
-                
+
             # fit elite set
             elite_start = time()
             num_refit = max(int(np.ceil(self._gmm_refit_p * num_grasps)), 1)
@@ -719,7 +719,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                 if self._logging_dir is not None:
                     filename = os.path.join(self._logging_dir, 'elite_set_iter_%d.png' %(j))
                 vis.show(filename)
-                    
+
             # normalize elite set
             elite_grasp_mean = np.mean(elite_grasp_arr, axis=0)
             elite_grasp_std = np.std(elite_grasp_arr, axis=0)
@@ -764,7 +764,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
 
                         # approach_axis
                         grasp_axis = -normal_cloud_im[u, v]
-                        
+
                         # form grasp object
                         grasp = SuctionPoint2D.from_feature_vec(grasp_vec,
                                                                 camera_intr=camera_intr,
@@ -772,7 +772,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                                                                 axis=grasp_axis)
                     logging.debug('Feature vec took %.5f sec' %(time()-feature_start))
 
-                        
+
                     bounds_start = time()
                     # check in bounds
                     if state.segmask is None or \
@@ -785,7 +785,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                         valid = True
                         if self._filters is not None:
                             for filter_name, is_valid in self._filters.iteritems():
-                                valid = is_valid(grasp) 
+                                valid = is_valid(grasp)
                                 logging.debug('Grasp {} filter {} valid: {}'.format(k, filter_name, valid))
                                 if not valid:
                                     valid = False
@@ -794,7 +794,7 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
                             grasps.append(grasp)
                     logging.debug('Bounds took %.5f sec' %(time()-bounds_start))
                     num_tries += 1
-                    
+
             # check num grasps
             num_grasps = len(grasps)
             if num_grasps == 0:
@@ -839,7 +839,10 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
             vis.imshow(rgbd_im.depth,
                        vmin=self.config['vis']['vmin'],
                        vmax=self.config['vis']['vmax'])
-            vis.grasp(grasp, scale=5.0, show_center=False, show_axis=True, jaw_width=1.0, grasp_axis_width=0.2)
+            if grasp_type == 'parallel_jaw':
+                vis.grasp(grasp, scale=5.0, show_center=False, show_axis=True, jaw_width=1.0, grasp_axis_width=0.2)
+            else:
+                vis.scatter(grasp.center.x, grasp.center.y, c=plt.cm.RdYlGn(q))
             vis.title('Best Grasp: d=%.3f, q=%.3f' %(grasp.depth,
                                                      q_value))
             filename = None
@@ -862,9 +865,9 @@ class CrossEntropyRobustGraspingPolicy(GraspingPolicy):
             action.save(action_dir)
 
         return action
-        
+
 class QFunctionRobustGraspingPolicy(CrossEntropyRobustGraspingPolicy):
-    """ Optimizes a set of antipodal grasp candidates in image space using the 
+    """ Optimizes a set of antipodal grasp candidates in image space using the
     cross entropy method with a GQ-CNN that estimates the Q-function
     for use in Q-learning.
 
@@ -929,9 +932,9 @@ class QFunctionRobustGraspingPolicy(CrossEntropyRobustGraspingPolicy):
                                        self._reinit_fc4,
                                        self._reinit_fc5)
         self.gqcnn.initialize_network(add_softmax=False)
-        
+
 class EpsilonGreedyQFunctionRobustGraspingPolicy(QFunctionRobustGraspingPolicy):
-    """ Optimizes a set of antipodal grasp candidates in image space 
+    """ Optimizes a set of antipodal grasp candidates in image space
     using the cross entropy method with a GQ-CNN that estimates the
     Q-function for use in Q-learning, and chooses a random antipodal
     grasp with probability epsilon.
@@ -975,7 +978,7 @@ class EpsilonGreedyQFunctionRobustGraspingPolicy(QFunctionRobustGraspingPolicy):
             grasp to execute
         """
         return CrossEntropyRobustGraspingPolicy.action(self, state)
-    
+
     def _action(self, state):
         """ Plans the grasp with the highest probability of success on
         the given RGB-D image.
@@ -1013,7 +1016,7 @@ class EpsilonGreedyQFunctionRobustGraspingPolicy(QFunctionRobustGraspingPolicy):
                                             segmask=segmask,
                                             visualize=self.config['vis']['grasp_sampling'],
                                             seed=self._seed)
-        
+
         num_grasps = len(grasps)
         if num_grasps == 0:
             logging.warning('No valid grasps could be found')
@@ -1031,7 +1034,7 @@ class EpsilonGreedyQFunctionRobustGraspingPolicy(QFunctionRobustGraspingPolicy):
         # predict prob success
         output_arr = self.gqcnn.predict(image_tensor, pose_tensor)
         q_value = output_arr[0,-1]
-        
+
         # visualize planned grasp
         if self.config['vis']['grasp_plan']:
             scale_factor = float(self.gqcnn.im_width) / float(self._crop_width)
@@ -1047,4 +1050,3 @@ class EpsilonGreedyQFunctionRobustGraspingPolicy(QFunctionRobustGraspingPolicy):
 
         # return action
         return GraspAction(grasp, q_value, image)
-

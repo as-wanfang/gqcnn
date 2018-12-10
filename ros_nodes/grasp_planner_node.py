@@ -76,6 +76,7 @@ class GraspPlanner(object):
             vis.imshow(depth_image)
             vis.show()
 
+        np.save("/home/bionicdl/depth_map_1.npy", depth_image.data)
         # aggregate color and depth images into a single perception rgbdimage
         depth_image = depth_image.inpaint(rescale_factor = self.cfg['inpaint_rescale_factor'])
         rgbd_image = perception.RgbdImage.from_color_and_depth(color_image, depth_image)
@@ -126,10 +127,15 @@ class GraspPlanner(object):
         # create a mask by filter away the destop
         print("Depth max",np.max(rgbd_image.depth.data))
         print("Depth min",np.min(rgbd_image.depth.data))
-        mask = (depth_image.data < 0.79).astype(np.uint8)+1
+
+        background = np.load('/home/bionicdl/depth_map_background.npy')
+        mask = ((background - depth_image.data)>5).astype(np.uint8)+1
+        mask[:,:258] = 1
+        mask[:100,:] = 1
+        # mask = (depth_image.data < 700).astype(np.uint8)+(depth_image.data > 400).astype(np.uint8)
         segmask = perception.BinaryImage(mask, frame=camera_intrinsics.frame, threshold=1.5)
-        vis.imshow(segmask)
-        vis.show()
+        # vis.imshow(segmask)
+        # vis.show()
         image_state = RgbdImageState(rgbd_image, camera_intrinsics, segmask=segmask)
 
         # execute policy
@@ -157,7 +163,6 @@ class GraspPlanner(object):
             frame of reference to publish pose alone in
         """
         # execute the policy's action
-        rospy.loginfo('Planning Grasp')
         grasp_planning_start_time = time.time()
         grasp = grasping_policy(rgbd_image_state)
 

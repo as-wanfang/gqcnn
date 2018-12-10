@@ -58,7 +58,7 @@ class Grasp2D(object):
         # if camera_intr is none use default primesense camera intrinsics
         if not camera_intr:
             self.camera_intr = CameraIntrinsics('primesense_overhead', fx=525, fy=525, cx=319.5, cy=239.5, width=640, height=480)
-        else: 
+        else:
             self.camera_intr = camera_intr
         self.contact_points = contact_points
         self.contact_normals = contact_normals
@@ -68,17 +68,17 @@ class Grasp2D(object):
             frame = camera_intr.frame
         if isinstance(center, np.ndarray):
             self.center = Point(center, frame=frame)
-        
+
     @property
     def axis(self):
         """ Returns the grasp axis. """
-        return np.array([np.cos(self.angle), np.sin(self.angle)])        
+        return np.array([np.cos(self.angle), np.sin(self.angle)])
 
     @property
     def approach_angle(self):
         """ The angle between the grasp approach axis and camera optical axis. """
         return 0.0
-    
+
     @property
     def frame(self):
         """ The name of the frame of reference for the grasp. """
@@ -95,7 +95,7 @@ class Grasp2D(object):
         # form the jaw locations in 3D space at the given depth
         p1 = Point(np.array([0, 0, self.depth]), frame=self.frame)
         p2 = Point(np.array([self.width, 0, self.depth]), frame=self.frame)
-        
+
         # project into pixel space
         u1 = self.camera_intr.project(p1)
         u2 = self.camera_intr.project(p2)
@@ -151,7 +151,7 @@ class Grasp2D(object):
         """ Computes the 3D pose of the grasp relative to the camera.
         If an approach direction is not specified then the camera
         optical axis is used.
-     
+
         Parameters
         ----------
         grasp_approach_dir : :obj:`numpy.ndarray`
@@ -177,7 +177,7 @@ class Grasp2D(object):
         grasp_axis_im = grasp_axis_im / np.linalg.norm(grasp_axis_im)
         grasp_axis_camera = np.array([grasp_axis_im[0], grasp_axis_im[1], 0])
         grasp_axis_camera = grasp_axis_camera / np.linalg.norm(grasp_axis_camera)
-        
+
         # convert to 3D pose
         grasp_rot_camera, _, _ = np.linalg.svd(grasp_axis_camera.reshape(3,1))
         grasp_x_camera = grasp_approach_dir
@@ -253,13 +253,15 @@ class SuctionPoint2D(object):
         if isinstance(axis, list):
             self.axis = np.array(axis)
         if np.abs(np.linalg.norm(self.axis) - 1.0) > 1e-3:
+            print("Below is grasp.axis")
+            self.axis
             raise ValueError('Illegal axis. Must be norm 1.')
 
         self.depth = depth
         # if camera_intr is none use default primesense camera intrinsics
         if not camera_intr:
             self.camera_intr = CameraIntrinsics('primesense_overhead', fx=525, fy=525, cx=319.5, cy=239.5, width=640, height=480)
-        else: 
+        else:
             self.camera_intr = camera_intr
 
     @property
@@ -296,7 +298,7 @@ class SuctionPoint2D(object):
         #return np.r_[self.center.data, self.axis, self.depth]
         #return np.r_[self.center.data, self.axis]
         return self.center.data
-        
+
     @staticmethod
     def from_feature_vec(v, camera_intr=None, depth=None, axis=None):
         """ Creates a SuctionPoint2D obj from a feature vector and additional parameters.
@@ -321,13 +323,13 @@ class SuctionPoint2D(object):
             grasp_axis = grasp_axis / np.linalg.norm(grasp_axis)
         elif axis is not None:
             grasp_axis = axis
-            
-        grasp_depth = 0.5    
+
+        grasp_depth = 0.5
         if v.shape[0] > 5 and depth is None:
             grasp_depth = v[5]
         elif depth is not None:
             grasp_depth = depth
-            
+
         # compute center and angle
         center = Point(center_px, camera_intr.frame)
         return SuctionPoint2D(center,
@@ -355,7 +357,7 @@ class SuctionPoint2D(object):
 
         # compute 3D grasp axis in camera basis
         suction_axis_camera = self.axis
-        
+
         # convert to 3D pose
         suction_x_camera = suction_axis_camera
         suction_z_camera = np.array([-suction_x_camera[1], suction_x_camera[0], 0])
