@@ -63,7 +63,7 @@ policy:
     grasp_candidates: 0
     elite_grasps: 0
     grasp_ranking: 0
-    grasp_plan: 1
+    grasp_plan: 0
     final_grasp: 0
 
     k: 25
